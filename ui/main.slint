@@ -1,0 +1,66 @@
+// import { StyleMetrics } from "std-widgets.slint";
+// import { Ctrl } from "page/ctrl.slint";
+// import { List } from "page/list.slint";
+// export component App inherits Window {
+//     width: 1240px;
+//     height: 760px;
+//     // icon: @image-url("reso/logo.png");
+//     background: StyleMetrics.window-background;
+//     title: @tr("Music_Player");
+//     callback loadfile <=> ct.loadfile;
+//     callback stop <=> ct.stop;
+//     callback paly <=> ct.play;
+//     callback next <=> ct.next;
+//     callback peaue <=> ct.peaue;
+//     in-out property list <=> list.list;
+//     in-out property select <=> list.select;
+//     VerticalLayout {
+//         alignment: start;
+//         spacing: 10px;
+//             ct := Ctrl {
+//                 num:select;
+//                 width: root.width;
+//                 height: root.height*0.05;
+//             }
+//             list := List{
+//                 width: root.width;
+//                 height: root.height;
+//             }
+        
+//     }
+// }
+
+import { ListView, Button } from "std-widgets.slint";
+export component App inherits Window {
+    width: 800px;
+    height: 600px;
+    title: "Music Player";
+
+    in-out property <[string]> songs: [];
+
+    callback play();
+    callback pause();
+    callback stop();
+    callback previous();
+    callback next();
+    callback open_folder();
+
+    VerticalLayout {
+        ListView {
+            // : song_list;
+            for song in songs : Text {
+                text: song;
+            }
+        }
+        HorizontalLayout {
+            Button { text: "Play"; clicked => {play()} }
+            Button { text: "Pause"; clicked => {pause()} }
+            Button { text: "Stop"; clicked => {stop() }}
+            Button { text: "Previous"; clicked => {previous()} }
+            Button { text: "Next"; clicked => {next() }}
+            Button { text: "LoadFile"; clicked => {open_folder() }}
+        }
+    }
+
+    
+}

@@ -1,0 +1,58 @@
+import { Button,Slider } from "std-widgets.slint";
+export component Ctrl inherits GridLayout {
+    callback play(int);
+    callback next();
+    callback stop();
+    callback peaue();
+    callback loadfile();
+    in-out property <int> val;
+    in-out property <int> time;
+    in-out property <int> num : 0;
+    spacing: 5px;
+    Row {
+        lf := Button { 
+            colspan: 1;
+            text: "LoadFile";
+            clicked => {
+                root.loadfile()
+            }
+        }
+        sp := Button {
+            colspan: 1;
+            text:"Stop";
+            clicked => {
+                root.stop()
+            }
+        }
+        pl := Button {
+            colspan: 1;
+            text: "Play";
+            clicked => {
+                root.play(num)
+            }
+        }
+        peaue := Button {
+            colspan: 1;
+            text: "peaue";
+            clicked => {
+                root.peaue()
+            }
+        }
+        nx := Button {
+            colspan: 1;
+            text : "Next";
+            clicked => {
+                root.next()
+            }
+        }
+        // vl := Slider {
+        //     colspan: 1;
+        //     value: root.val;
+        //     maximum: 10;
+        // }
+        songtime := Slider {
+            value: root.time;
+        }
+
+    }
+}

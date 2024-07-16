@@ -1,0 +1,19 @@
+
+import { StandardTableView } from "std-widgets.slint";
+export component List inherits Rectangle {
+    in-out property <[[StandardListViewItem]]> list;
+    in-out property <int> select;
+    StandardTableView { 
+        width: parent.width;
+        height: parent.width*0.65;
+        current-row-changed(i) => {select = i}
+        columns: [
+            {title:"SongName"},
+            {title:"Artist"},
+            {title:"Album"},
+            {title:"Year"},
+            // {title:"Genre"},
+        ];
+        rows: root.list;
+     }
+}
