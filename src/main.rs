@@ -7,111 +7,25 @@ mod loadfile;
 pub mod generated_code {
     slint::include_modules!();
 }
+use command::MusicPlayer;
 pub use generated_code::*;
-use loadfile::{load_files, Song};
+use loadfile::{run_load, Song};
+use rodio::OutputStream;
 use slint::{ModelRc, SharedString, VecModel};
 
 use std::rc::Rc;
 use std::sync::{Arc, Mutex};
-use std::fs;
-use std::path::Path;
-use rodio::{OutputStream, OutputStreamHandle, Sink, Decoder};
-use std::io::BufReader;
-use tokio::task;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::{Sender, Receiver};
+pub mod command;
 
-
-
-struct MusicPlayer {
-    songs: Vec<Song>,
-    current_index: usize,
-    sink: Arc<Mutex<Sink>>,
-    stream_handle: OutputStreamHandle,
-    loop_enabled: Arc<Mutex<bool>>,
-    tx: Sender<PlayerCommand>,
-}
-
-impl MusicPlayer {
-    fn new(songs: Vec<Song>, stream_handle: OutputStreamHandle, tx: Sender<PlayerCommand>) -> Self {
-        let sink = Sink::try_new(&stream_handle).unwrap();
-        Self {
-            songs,
-            current_index: 0,
-            sink: Arc::new(Mutex::new(sink)),
-            stream_handle,
-            loop_enabled: Arc::new(Mutex::new(false)),
-            tx,
-        }
-    }
-
-    fn play(&self) {
-        let sink = Arc::clone(&self.sink);
-        let stream_handle = self.stream_handle.clone();
-        let song = self.songs[self.current_index].clone();
-        let loop_enabled = Arc::clone(&self.loop_enabled);
-        let tx = self.tx.clone();
-        task::spawn_blocking(move || {
-            let mut sink = sink.lock().unwrap();
-            sink.stop();
-            let file = std::fs::File::open(song.path).unwrap();
-            let source = Decoder::new(BufReader::new(file)).unwrap();
-            sink.append(source);
-            sink.play();
-            // let loop_enabled = Arc::clone(&loop_enabled);
-            // let tx = tx.clone();
-            // sink.set_finish_callback(move || {
-            //     if *loop_enabled.lock().unwrap() {
-            //         let mut sink = sink.clone();
-            //         let file = std::fs::File::open(song.clone()).unwrap();
-            //         let source = Decoder::new(BufReader::new(file)).unwrap();
-            //         sink.append(source);
-            //         sink.play();
-            //     } else {
-            //         let _ = tx.try_send(PlayerCommand::Next);
-            //     }
-            // });
-        });
-    }
-
-
-    fn pause(&self) {
-        let sink = self.sink.lock().unwrap();
-        sink.pause();
-    }
-
-    fn stop(&self) {
-        let sink = self.sink.lock().unwrap();
-        sink.stop();
-    }
-
-    fn next(&mut self) {
-        self.current_index = (self.current_index + 1) % self.songs.len();
-        self.play();
-    }
-
-    fn previous(&mut self) {
-        if self.current_index == 0 {
-            self.current_index = self.songs.len() - 1;
-        } else {
-            self.current_index -= 1;
-        }
-        self.play();
-    }
-
-    fn toggle_loop(&self) {
-        let mut loop_enabled = self.loop_enabled.lock().unwrap();
-        *loop_enabled = !*loop_enabled;
-    }
-}
-
-enum PlayerCommand {
+pub enum PlayerCommand {
     Play,
     Pause,
     Stop,
     Next,
     Previous,
-    ToggleLoop,
+    ToggleLoop{bool: bool},
     LoadSongs(Vec<Song>),
 }
 
@@ -120,9 +34,9 @@ async fn main() {
     let app = App::new().unwrap();
     let app_weak = app.as_weak();
 
-    let (stream, stream_handle) = OutputStream::try_default().unwrap();
+    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let (tx, mut rx): (Sender<PlayerCommand>, Receiver<PlayerCommand>) = mpsc::channel(1);
-    let player = Arc::new(Mutex::new(MusicPlayer::new(Vec::new(), stream_handle, tx.clone())));
+    let player = Arc::new(Mutex::new(MusicPlayer::new(stream_handle, tx.clone(),app_weak.clone())));
 
     app.on_play({
         let tx = tx.clone();
@@ -159,12 +73,12 @@ async fn main() {
         }
     });
 
-    // app.on_toggle_loop({
-    //     let tx = tx.clone();
-    //     move || {
-    //         let _ = tx.try_send(PlayerCommand::ToggleLoop);
-    //     }
-    // });
+    app.on_toggle_loop({
+        let tx = tx.clone();
+        move |bool| {
+            let _ = tx.try_send(PlayerCommand::ToggleLoop{bool});
+        }
+    });
 
     app.on_open_folder({
         let app_weak = app_weak.clone();
@@ -173,10 +87,7 @@ async fn main() {
             let app_weak = app_weak.clone();
             let tx = tx.clone();
             tokio::spawn(async move {
-                let dialog = rfd::AsyncFileDialog::new().pick_folder().await;
-                if let Some(folder) = dialog {
-                    let folder_path = folder.path().display().to_string();
-                    let songs = load_files(&folder_path);
+                let songs = run_load().await.unwrap();
                     let song = songs.iter().map(|song|{
                         song.clone().title.into()
                     }).collect::<Vec<SharedString>>();
@@ -184,7 +95,6 @@ async fn main() {
                         ui.set_songs(ModelRc::from(Rc::new(VecModel::from(song))))
                     });
                     let _ = tx.send(PlayerCommand::LoadSongs(songs)).await;
-                }
             });
         }
     });
@@ -200,7 +110,7 @@ async fn main() {
                         PlayerCommand::Stop => player.stop(),
                         PlayerCommand::Next => player.next(),
                         PlayerCommand::Previous => player.previous(),
-                        PlayerCommand::ToggleLoop => player.toggle_loop(),
+                        PlayerCommand::ToggleLoop {bool} => player.toggle_loop(bool),
                         PlayerCommand::LoadSongs(songs) => player.songs = songs,
                     }
                 }

@@ -771,6 +771,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "chrono"
+version = "0.4.38"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a21f936df1771bf62b77f047b726c4625ff2e8aa607c01ec06e5a05bd8463401"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "clang-sys"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2700,6 +2709,7 @@ dependencies = [
 name = "music_player"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "ffmpeg-next",
  "futures",
  "rfd",

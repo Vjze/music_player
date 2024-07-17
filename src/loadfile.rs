@@ -9,7 +9,7 @@ pub struct Song {
     pub title: String,
     artist: String,
     album: String,
-    duration: Option<f64>,
+    pub duration: f64,
     date: String,
     playing: bool,
     pub path: String,
@@ -18,39 +18,6 @@ pub struct Song {
 pub async fn run_load() -> tokio::io::Result<Vec<Song>> {
     let lib_path = rfd::FileDialog::new().pick_folder().unwrap().as_path().display().to_string();
     let songs = load_files(&lib_path);
-    let song = songs.clone();
-    // handle
-    //     .upgrade_in_event_loop(move |ui| {
-    //         let mut row_data: Vec<slint::ModelRc<StandardListViewItem>> = vec![];
-    //         for s in song {
-    //             let items = Rc::new(VecModel::default());
-    //             let title = StandardListViewItem::from(slint::format!(
-    //                 "{}",
-    //                 s.title.unwrap_or("?".to_string())
-    //             ));
-    //             let artist = StandardListViewItem::from(slint::format!(
-    //                 "{}",
-    //                 s.artist.unwrap_or("?".to_string())
-    //             ));
-    //             let album = StandardListViewItem::from(slint::format!(
-    //                 "{}",
-    //                 s.album.unwrap_or("?".to_string())
-    //             ));
-    //             let date = StandardListViewItem::from(slint::format!(
-    //                 "{}",
-    //                 s.date.unwrap_or("?".to_string())
-    //             ));
-    //             items.push(title);
-    //             items.push(artist);
-    //             items.push(album);
-    //             items.push(date);
-    //             row_data.push(items.into())
-    //         }
-    //         let data = Rc::new(VecModel::from(row_data));
-    //         ui.set_list(data.into())
-    //     })
-    //     .unwrap();
-    
     Ok(songs)
 }
 pub fn load_files(dir: &str) -> Vec<Song> {
@@ -128,7 +95,7 @@ fn get_song_meta(f: &str) -> Song {
                 }
             }
             song.duration =
-                Some((context.duration() as f64 / f64::from(ffmpeg::ffi::AV_TIME_BASE)).round());
+                context.duration() as f64 / f64::from(ffmpeg::ffi::AV_TIME_BASE).round();
         }
         Err(error) => println!("error:{}", error),
     }

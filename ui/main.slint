@@ -30,22 +30,27 @@
 //     }
 // }
 
-import { ListView, Button } from "std-widgets.slint";
+import { ListView, Button, Switch, Slider } from "std-widgets.slint";
 export component App inherits Window {
-    width: 800px;
-    height: 600px;
+    width: 1280px;
+    height: 720px;
     title: "Music Player";
 
     in-out property <[string]> songs: [];
-
+    in-out property <bool> loop;
+    in-out property <int> nowtime;
+    in-out property <int> maxtime;
     callback play();
     callback pause();
     callback stop();
     callback previous();
     callback next();
     callback open_folder();
+    callback toggle_loop(bool);
 
     VerticalLayout {
+        spacing: 10px;
+        padding: 10px;
         ListView {
             // : song_list;
             for song in songs : Text {
@@ -53,12 +58,34 @@ export component App inherits Window {
             }
         }
         HorizontalLayout {
+            Slider {
+                width: 800px;
+                value: nowtime;
+                minimum: 0;
+                maximum: maxtime;
+            }
+            Rectangle {
+                Text {
+                    text: @tr("{} - {}",nowtime,maxtime);
+                }
+            }
+        }
+        
+        HorizontalLayout {
+            alignment: space-between;
             Button { text: "Play"; clicked => {play()} }
             Button { text: "Pause"; clicked => {pause()} }
             Button { text: "Stop"; clicked => {stop() }}
             Button { text: "Previous"; clicked => {previous()} }
             Button { text: "Next"; clicked => {next() }}
             Button { text: "LoadFile"; clicked => {open_folder() }}
+            xh := Switch {
+                text: "循环播放";
+                checked: root.loop;
+                toggled => {
+                    toggle_loop(root.loop)
+                }
+            }
         }
     }
 
