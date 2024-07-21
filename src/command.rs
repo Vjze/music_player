@@ -1,7 +1,11 @@
-use std::{io::BufReader, sync::{Arc, Mutex}, time::{Duration, Instant}};
-use crate::{ App};
+use crate::App;
 use rodio::{Decoder, OutputStreamHandle, Sink, Source};
 use slint::Weak;
+use std::{
+    io::BufReader,
+    sync::{Arc, Mutex},
+    time::{Duration, Instant},
+};
 use tokio::{sync::mpsc::Sender, task, time};
 
 use crate::{loadfile::Song, PlayerCommand};
@@ -24,7 +28,11 @@ pub struct MusicPlayer {
 }
 
 impl MusicPlayer {
-    pub fn new(stream_handle: OutputStreamHandle, tx: Sender<PlayerCommand>, app: Weak<App>) -> Self {
+    pub fn new(
+        stream_handle: OutputStreamHandle,
+        tx: Sender<PlayerCommand>,
+        app: Weak<App>,
+    ) -> Self {
         let sink = Sink::try_new(&stream_handle).unwrap();
         Self {
             songs: Vec::default(),
@@ -56,26 +64,24 @@ impl MusicPlayer {
                     let sink = self.sink.lock().unwrap();
                     sink.stop();
                     self.songs[self.current_index].clone()
-                    
                 };
                 let sink = Arc::clone(&self.sink);
                 // let _stream_handle = self.stream_handle.clone();
                 let loop_enabled = Arc::clone(&self.loop_enabled);
                 let tx = self.tx.clone();
                 let state = Arc::clone(&self.state);
-                let _ = self.app.upgrade_in_event_loop(move |ui|{
+                let _ = self.app.upgrade_in_event_loop(move |ui| {
                     ui.set_maxtime(song.duration.clone() as i32);
                 });
-                
+
                 task::spawn_blocking(move || {
                     let file = std::fs::File::open(song.path.clone()).unwrap();
                     let source = Decoder::new(BufReader::new(file)).unwrap();
-                    
+
                     {
                         let sink = sink.lock().unwrap();
                         sink.append(source);
                         sink.play();
-                        
                     }
 
                     {
@@ -99,7 +105,6 @@ impl MusicPlayer {
                                         let sink = sink.lock().unwrap();
                                         sink.append(source);
                                         sink.play();
-                                        
                                     }
                                 } else {
                                     let _ = tx.try_send(PlayerCommand::Next);
@@ -141,13 +146,18 @@ impl MusicPlayer {
         self.play();
     }
 
+    pub fn select(&mut self, u: i32) {
+        // let sink = self.sink.lock().unwrap();
+        // sink.stop();
+        // let mut state = self.state.lock().unwrap();
+        // *state = PlayerState::Stopped;
+        self.current_index = u as usize;
+        // self.state = PlayState::Playing;
+        self.play();
+    }
+
     pub fn toggle_loop(&self, b: bool) {
         let mut loop_enabled = self.loop_enabled.lock().unwrap();
         *loop_enabled = b;
     }
-
-    
-
 }
-
-

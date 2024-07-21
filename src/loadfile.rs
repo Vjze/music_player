@@ -1,8 +1,8 @@
-
+use crate::App;
 use ffmpeg_next as ffmpeg;
 use serde::{Deserialize, Serialize};
-
-use std::{fs, path::Path};
+use slint::{StandardListViewItem, VecModel, Weak};
+use std::{fs, path::Path, rc::Rc};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, Default)]
 pub struct Song {
@@ -15,9 +15,35 @@ pub struct Song {
     pub path: String,
 }
 
-pub async fn run_load() -> tokio::io::Result<Vec<Song>> {
-    let lib_path = rfd::FileDialog::new().pick_folder().unwrap().as_path().display().to_string();
+pub async fn run_load(handle: Weak<App>) -> tokio::io::Result<Vec<Song>> {
+    let lib_path = rfd::FileDialog::new()
+        .pick_folder()
+        .unwrap()
+        .as_path()
+        .display()
+        .to_string();
     let songs = load_files(&lib_path);
+    let song = songs.clone();
+    handle
+        .upgrade_in_event_loop(move |ui| {
+            let mut row_data: Vec<slint::ModelRc<StandardListViewItem>> = vec![];
+            for s in song {
+                let items = Rc::new(VecModel::default());
+                let title = StandardListViewItem::from(slint::format!("{}", s.title));
+                let artist = StandardListViewItem::from(slint::format!("{}", s.artist));
+                let album = StandardListViewItem::from(slint::format!("{}", s.album));
+                let date = StandardListViewItem::from(slint::format!("{}", s.date));
+                items.push(title);
+                items.push(artist);
+                items.push(album);
+                items.push(date);
+                row_data.push(items.into())
+            }
+            let data = Rc::new(VecModel::from(row_data));
+            ui.set_list(data.into())
+        })
+        .unwrap();
+
     Ok(songs)
 }
 pub fn load_files(dir: &str) -> Vec<Song> {

@@ -1,92 +1,56 @@
-// import { StyleMetrics } from "std-widgets.slint";
-// import { Ctrl } from "page/ctrl.slint";
-// import { List } from "page/list.slint";
-// export component App inherits Window {
-//     width: 1240px;
-//     height: 760px;
-//     // icon: @image-url("reso/logo.png");
-//     background: StyleMetrics.window-background;
-//     title: @tr("Music_Player");
-//     callback loadfile <=> ct.loadfile;
-//     callback stop <=> ct.stop;
-//     callback paly <=> ct.play;
-//     callback next <=> ct.next;
-//     callback peaue <=> ct.peaue;
-//     in-out property list <=> list.list;
-//     in-out property select <=> list.select;
-//     VerticalLayout {
-//         alignment: start;
-//         spacing: 10px;
-//             ct := Ctrl {
-//                 num:select;
-//                 width: root.width;
-//                 height: root.height*0.05;
-//             }
-//             list := List{
-//                 width: root.width;
-//                 height: root.height;
-//             }
-        
-//     }
-// }
-
 import { ListView, Button, Switch, Slider } from "std-widgets.slint";
+import { List } from "page/list.slint";
+import { Ctrl } from "page/ctrl.slint";
 export component App inherits Window {
     width: 1280px;
     height: 720px;
     title: "Music Player";
 
-    in-out property <[string]> songs: [];
-    in-out property <bool> loop;
-    in-out property <int> nowtime;
-    in-out property <int> maxtime;
-    callback play();
-    callback pause();
-    callback stop();
-    callback previous();
-    callback next();
-    callback open_folder();
-    callback toggle_loop(bool);
+    in-out property list <=> list.list;
+    in-out property loop <=> ctrl.loop;
+    in-out property nowtime <=> ctrl.nowtime;
+    in-out property maxtime <=> ctrl.maxtime;
+    callback play <=> ctrl.play;
+    callback pause <=> ctrl.pause;
+    callback stop <=> ctrl.stop;
+    callback previous <=> ctrl.previous;
+    callback next <=> ctrl.next;
+    callback open_folder <=> ctrl.open_folder;
+    callback toggle_loop <=> ctrl.toggle_loop;
+    callback select <=> list.select;
 
     VerticalLayout {
+        alignment: space-between;
         spacing: 10px;
         padding: 10px;
-        ListView {
-            // : song_list;
-            for song in songs : Text {
-                text: song;
+        height: parent.height;
+        HorizontalLayout {
+            height: root.height * 0.85;
+            list := List {
+                height: parent.height;
             }
         }
-        HorizontalLayout {
-            Slider {
-                width: 800px;
-                value: nowtime;
-                minimum: 0;
-                maximum: maxtime;
-            }
-            Rectangle {
-                Text {
-                    text: @tr("{} - {}",nowtime,maxtime);
+        VerticalLayout {
+            height: root.height * 0.08;
+            HorizontalLayout {
+                Slider {
+                    width: 800px;
+                    value: nowtime;
+                    minimum: 0;
+                    maximum: maxtime;
                 }
+                Rectangle {
+                    Text {
+                        text: @tr("{} - {}",nowtime,maxtime);
+                    }
+                }
+            }
+            ctrl := Ctrl {
+    
             }
         }
         
-        HorizontalLayout {
-            alignment: space-between;
-            Button { text: "Play"; clicked => {play()} }
-            Button { text: "Pause"; clicked => {pause()} }
-            Button { text: "Stop"; clicked => {stop() }}
-            Button { text: "Previous"; clicked => {previous()} }
-            Button { text: "Next"; clicked => {next() }}
-            Button { text: "LoadFile"; clicked => {open_folder() }}
-            xh := Switch {
-                text: "循环播放";
-                checked: root.loop;
-                toggled => {
-                    toggle_loop(root.loop)
-                }
-            }
-        }
+        
     }
 
     

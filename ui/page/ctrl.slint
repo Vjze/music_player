@@ -1,58 +1,33 @@
-import { Button,Slider } from "std-widgets.slint";
-export component Ctrl inherits GridLayout {
-    callback play(int);
-    callback next();
-    callback stop();
-    callback peaue();
-    callback loadfile();
-    in-out property <int> val;
-    in-out property <int> time;
-    in-out property <int> num : 0;
-    spacing: 5px;
-    Row {
-        lf := Button { 
-            colspan: 1;
-            text: "LoadFile";
-            clicked => {
-                root.loadfile()
-            }
-        }
-        sp := Button {
-            colspan: 1;
-            text:"Stop";
-            clicked => {
-                root.stop()
-            }
-        }
-        pl := Button {
-            colspan: 1;
-            text: "Play";
-            clicked => {
-                root.play(num)
-            }
-        }
-        peaue := Button {
-            colspan: 1;
-            text: "peaue";
-            clicked => {
-                root.peaue()
-            }
-        }
-        nx := Button {
-            colspan: 1;
-            text : "Next";
-            clicked => {
-                root.next()
-            }
-        }
-        // vl := Slider {
-        //     colspan: 1;
-        //     value: root.val;
-        //     maximum: 10;
-        // }
-        songtime := Slider {
-            value: root.time;
-        }
+import { Button,Slider, Switch } from "std-widgets.slint";
+export component Ctrl inherits Rectangle {
 
+    in-out property <[string]> songs: [];
+    in-out property <bool> loop;
+    in-out property <int> nowtime;
+    in-out property <int> maxtime;
+    
+    callback play();
+    callback pause();
+    callback stop();
+    callback previous();
+    callback next();
+    callback open_folder();
+    callback toggle_loop(bool);
+    
+    HorizontalLayout {
+        alignment: space-between;
+        Button { text: "Play"; clicked => {play()} }
+        Button { text: "Pause"; clicked => {pause()} }
+        Button { text: "Stop"; clicked => {stop() }}
+        Button { text: "Previous"; clicked => {previous()} }
+        Button { text: "Next"; clicked => {next() }}
+        Button { text: "LoadFile"; clicked => {open_folder() }}
+        xh := Switch {
+            text: "循环播放";
+            checked: root.loop;
+            toggled => {
+                toggle_loop(root.loop)
+            }
+        }
     }
 }

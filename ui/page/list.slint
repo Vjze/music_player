@@ -2,11 +2,11 @@
 import { StandardTableView } from "std-widgets.slint";
 export component List inherits Rectangle {
     in-out property <[[StandardListViewItem]]> list;
-    in-out property <int> select;
+    callback select(int);
     StandardTableView { 
         width: parent.width;
-        height: parent.width*0.65;
-        current-row-changed(i) => {select = i}
+        height: parent.height;
+        current-row-changed(i) => {select(i)}
         columns: [
             {title:"SongName"},
             {title:"Artist"},
